@@ -13,28 +13,28 @@ const container = ref(null)
 // 固定的路径点坐标数组
 // 注意：Three.js坐标系 - X:左右, Y:上下, Z:前后
 const routePoints = [
-  { x: 0, y: 1.51, z: -17 },    // 起始点 - 使用模型的实际地面高度
-  { x: 10, y: 1.51, z: -17 },    // 途经点1
-  { x: 15, y: 1.51, z: -17 },    // 途经点1
-  { x: 20, y: 1.51, z: -17 },    // 途经点1
-  { x: 25, y: 1.51, z: -17 },    // 途经点1
-  { x: 30, y: 1.51, z: -17 },  // 途经点1
-  { x: 32, y: 1.51, z: -17 },  // 途经点1
-  { x: 32, y: 1.51, z: -20 },  // 途经点2
-  { x: 32, y: 1.51, z: -23 },  // 途经点2
-  { x: 32, y: 1.51, z: -26 },  // 途经点2
-  { x: 32, y: 1.51, z: -29 },  // 途经点2
-  { x: 30, y: 1.51, z: -29 },  // 途经点3
-  { x: 25, y: 1.51, z: -29 },  // 途经点3
-  { x: 20, y: 1.51, z: -29 },  // 途经点3
-  { x: 15, y: 1.51, z: -29 },  // 途经点3
-  { x: 10, y: 1.51, z: -29 },  // 途经点3
-  { x: 0, y: 1.51, z: -29 },  // 途经点4
-  { x: 0, y: 1.51, z: -26 },  // 途经点4
-  { x: 0, y: 1.51, z: -23 },  // 途经点4
-  { x: 0, y: 1.51, z: -23 },  // 途经点4
-  { x: 0, y: 1.51, z: -17 },  // 途经点4
-  { x: 0, y: 1.51, z: -17 }   // 终点
+  { x: 0, y: 2.68, z: -17 },    // 起始点 - 使用模型的实际地面高度
+  { x: 10, y: 2.68, z: -17 },    // 途经点1
+  { x: 15, y: 2.68, z: -17 },    // 途经点1
+  { x: 20, y: 2.68, z: -17 },    // 途经点1
+  { x: 25, y: 2.68, z: -17 },    // 途经点1
+  { x: 30, y: 2.68, z: -17 },  // 途经点1
+  { x: 32, y: 2.68, z: -17 },  // 途经点1
+  { x: 32, y: 2.68, z: -20 },  // 途经点2
+  { x: 32, y: 2.68, z: -23 },  // 途经点2
+  { x: 32, y: 2.68, z: -26 },  // 途经点2
+  { x: 32, y: 2.68, z: -29 },  // 途经点2
+  { x: 30, y: 2.68, z: -29 },  // 途经点3
+  { x: 25, y: 2.68, z: -29 },  // 途经点3
+  { x: 20, y: 2.68, z: -29 },  // 途经点3
+  { x: 15, y: 2.68, z: -29 },  // 途经点3
+  { x: 10, y: 2.68, z: -29 },  // 途经点3
+  { x: 0, y: 2.68, z: -29 },  // 途经点4
+  { x: 0, y: 2.68, z: -26 },  // 途经点4
+  { x: 0, y: 2.68, z: -23 },  // 途经点4
+  { x: 0, y: 2.68, z: -23 },  // 途经点4
+  { x: 0, y: 2.68, z: -17 },  // 途经点4
+  { x: 0, y: 2.68, z: -17 }   // 终点
 ]
 
 // 车辆运动相关变量
@@ -92,7 +92,7 @@ const initControls = () => {
 const loadModel = () => {
   const loader = new GLTFLoader()
   loader.load(
-    '/cangku20.glb',
+    '/chache12.glb',
     (gltf) => {
       console.log(gltf, 'model loaded')
       const car_scene = gltf.scene;
@@ -163,16 +163,25 @@ const handleClick = (event) => {
   // 计算射线和模型相交的点
   const intersects = raycaster.intersectObjects(scene.children, true)
 
-  if (intersects.length > 0) {
-    console.log('点击到的对象：', intersects[0].object)
-    console.log('对象名称：', intersects[0].object.name)
-    console.log('材质信息：', intersects[0].object.material)
-    
+  if (intersects.length > 0) {    
     const clickedObject = intersects[0].object
-    
-    // 检查对象名称是否为 "car"
-    if (clickedObject.name === "car") {
-      handleCarClick(clickedObject)
+    // 向上遍历父级对象，寻找叉车的根对象
+    let targetObject = clickedObject
+    while (targetObject) {    
+      // 检查是否是叉车相关的对象（根据层级结构）
+      if (targetObject.name === "car" || 
+          targetObject.name === "forklift_truck.fbx" ||
+          targetObject.name === "car.001") {
+        handleCarClick(targetObject)
+        break
+      }
+      
+      // 继续向上查找父级对象
+      targetObject = targetObject.parent
+      // 如果到达场景根节点，停止查找
+      if (targetObject === scene) {
+        break
+      }
     }
   }
 }
