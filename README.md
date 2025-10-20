@@ -1,5 +1,17 @@
-# Vue 3 + Vite
+1. 问题:  小车运动 ,y轴运动变成了z轴运动, z轴运动变成了y轴运动 
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+### Three.js 坐标系统
+- X轴 : 左右方向 (负值向左，正值向右)
+- Y轴 : 上下方向 (负值向下，正值向上)
+- Z轴 : 前后方向 (负值向后，正值向前)
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+这是Three.js的 右手坐标系 标准：
+
+- X轴：红色，指向右
+- Y轴：绿色，指向上
+- Z轴：蓝色，指向前（朝向观察者）
+
+
+解决:
+
+blender 导出.glb模型的时候 ,需要勾选 "+Y向上"
