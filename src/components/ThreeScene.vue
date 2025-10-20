@@ -97,7 +97,6 @@ const loadModel = () => {
   loader.load(
     '/chache12.glb',
     (gltf) => {
-      console.log(gltf, 'model loaded')
       const car_scene = gltf.scene;
       // 缩放整个场景到0.8倍
       car_scene.scale.set(0.3, 0.3, 0.3);
@@ -126,21 +125,15 @@ const handleCarClick = (clickedObject) => {
   carObject = clickedObject
   
   // 调试信息：显示车辆当前位置
-  console.log('点击前车辆位置:', carObject.position)
-  console.log('车辆对象信息:', carObject)
+
   
   if (!isCarMoving) {
     // 开始运动 - 将车辆移动到起始点
-    console.log('设置车辆到起始点:', routePoints[0])
     carObject.position.copy(routePoints[0])
-    console.log('设置后车辆位置:', carObject.position)
-    
     currentPointIndex = 0
     moveProgress = 0
     isReversing = false
     isCarMoving = true
-    console.log('车辆开始沿路径运动')
-    console.log('路径点:', routePoints)
     animateCar()
   } else {
     // 停止运动
@@ -149,7 +142,6 @@ const handleCarClick = (clickedObject) => {
       cancelAnimationFrame(carAnimationId)
       carAnimationId = null
     }
-    console.log('车辆停止运动')
   }
 }
 
@@ -209,7 +201,6 @@ const animateCar = () => {
   
     // 检查是否已经到达最后一个点，如果是则重新开始
   if (currentPointIndex >= routePoints.length) {
-    console.log('完成一轮路径运动，重新开始循环')
     currentPointIndex = 0 // 重置到起始点
     moveProgress = 0 // 重置进度
   }
@@ -221,14 +212,12 @@ const animateCar = () => {
   if (toPointIndex >= routePoints.length) {
     if (isContinuousMovement) {
       // 循环运动模式：重新开始
-      console.log('完成一轮路径运动，重新开始循环')
       currentPointIndex = 0 // 重置到起始点
       moveProgress = 0 // 重置进度
       carAnimationId = requestAnimationFrame(animateCar) // 继续动画
       return
     } else {
       // 单次运动模式：停止运动
-      console.log('路径运动完成，停止运动')
       isCarMoving = false
       if (carAnimationId) {
         cancelAnimationFrame(carAnimationId)
@@ -270,9 +259,6 @@ const animateCar = () => {
             // 设置车辆旋转
       carObject.rotation.z = targetRotation
     }
-    
-
-    console.log(`路段${fromPointIndex}->${toPointIndex}: 方向(${deltaX.toFixed(1)}, ${deltaZ.toFixed(1)}), 旋转角度: ${(targetRotation * 180 / Math.PI).toFixed(0)}度`)
   }
   
   // 更新运动进度
@@ -290,7 +276,6 @@ const animateCar = () => {
   if (moveProgress >= 1) {
     moveProgress = 0 // 重置进度
     currentPointIndex++ // 移动到下一个点
-    console.log(`到达途经点${currentPointIndex}，继续前进`)
   }
   
   carAnimationId = requestAnimationFrame(animateCar)
