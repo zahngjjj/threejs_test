@@ -10,17 +10,23 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 const container = ref(null)
 
-// 固定的起始点和终点坐标
-const startPoint = { x: 0, y: 0, z: 0 }
-const endPoint = { x: 10, y: 0, z: 0 }
+// 固定的路径点坐标数组
+const routePoints = [
+  { x: 0, y: 0, z: 0 },    // 起始点
+  { x: 5, y: 0, z: 0 },    // 途经点1
+  { x: 10, y: 0, z: 0 },   // 途经点2
+  { x: 15, y: 0, z: 0 },   // 途经点3
+  { x: 20, y: 0, z: 0 }    // 终点
+]
 
 // 车辆运动相关变量
 let carObject = null
 let isCarMoving = false
 let carAnimationId = null
-let currentTarget = 'end' // 'end' 或 'start'
+let currentPointIndex = 0 // 当前目标点索引
 let moveProgress = 0 // 运动进度 0-1
 const moveSpeed = 0.02 // 运动速度
+let isReversing = false // 是否正在返回
 
 // Three.js 相关变量
 let scene, camera, renderer, controls, raycaster, mouse
@@ -67,7 +73,7 @@ const initControls = () => {
 const loadModel = () => {
   const loader = new GLTFLoader()
   loader.load(
-    '/cangku8.glb',
+    '/cangku20.glb',
     (gltf) => {
       console.log(gltf, 'model loaded')
       scene.add(gltf.scene)
@@ -91,19 +97,18 @@ const initRaycaster = () => {
 const handleCarClick = (clickedObject) => {
   carObject = clickedObject
   
-  // 设置车辆初始位置为起始点
   if (!isCarMoving) {
-    carObject.position.set(startPoint.x, startPoint.y, startPoint.z)
+    // 开始运动 - 将车辆移动到起始点
+    carObject.position.copy(routePoints[0])
+    currentPointIndex = 0
     moveProgress = 0
-    currentTarget = 'end'
-  }
-  
-  // 开始或停止运动
-  if (!isCarMoving) {
+    isReversing = false
     isCarMoving = true
+    console.log('车辆开始沿路径运动')
+    console.log('路径点:', routePoints)
     animateCar()
-    console.log(`车辆开始从起始点(${startPoint.x}, ${startPoint.y}, ${startPoint.z})向终点(${endPoint.x}, ${endPoint.y}, ${endPoint.z})移动`)
   } else {
+    // 停止运动
     isCarMoving = false
     if (carAnimationId) {
       cancelAnimationFrame(carAnimationId)
@@ -154,19 +159,31 @@ const animate = () => {
   renderer.render(scene, camera)
 }
 
-// 车辆坐标运动函数
+// 车辆多点路径运动函数
 const animateCar = () => {
   if (!carObject || !isCarMoving) return
   
-  // 确定当前的起点和终点
-  let fromPoint, toPoint
-  if (currentTarget === 'end') {
-    fromPoint = startPoint
-    toPoint = endPoint
+  // 获取当前起点和终点
+  let fromPointIndex, toPointIndex
+  
+  if (!isReversing) {
+    // 正向运动
+    fromPointIndex = currentPointIndex
+    toPointIndex = currentPointIndex + 1
   } else {
-    fromPoint = endPoint
-    toPoint = startPoint
+    // 反向运动
+    fromPointIndex = currentPointIndex
+    toPointIndex = currentPointIndex - 1
   }
+  
+  // 检查索引是否有效
+  if (toPointIndex < 0 || toPointIndex >= routePoints.length) {
+    console.log('路径结束')
+    return
+  }
+  
+  const fromPoint = routePoints[fromPointIndex]
+  const toPoint = routePoints[toPointIndex]
   
   // 更新运动进度
   moveProgress += moveSpeed
@@ -181,11 +198,29 @@ const animateCar = () => {
   
   // 检查是否到达目标点
   if (moveProgress >= 1) {
-    // 切换目标点
-    currentTarget = currentTarget === 'end' ? 'start' : 'end'
     moveProgress = 0 // 重置进度
     
-    console.log(`车辆到达${currentTarget === 'end' ? '起始' : '终点'}点，开始向${currentTarget === 'end' ? '终点' : '起始点'}移动`)
+    if (!isReversing) {
+      // 正向运动
+      currentPointIndex++
+      if (currentPointIndex >= routePoints.length - 1) {
+        // 到达最后一个点，开始返回
+        isReversing = true
+        console.log('到达终点，开始返回')
+      } else {
+        console.log(`到达途经点${currentPointIndex}，继续前进`)
+      }
+    } else {
+      // 反向运动
+      currentPointIndex--
+      if (currentPointIndex <= 0) {
+        // 回到起始点，开始正向
+        isReversing = false
+        console.log('回到起始点，开始新的循环')
+      } else {
+        console.log(`返回到途经点${currentPointIndex}`)
+      }
+    }
   }
   
   carAnimationId = requestAnimationFrame(animateCar)
