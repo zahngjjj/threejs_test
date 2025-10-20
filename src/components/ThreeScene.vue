@@ -46,6 +46,7 @@ let moveProgress = 0 // 运动进度 0-1
 const moveSpeed = 0.02 // 运动速度
 let isReversing = false // 是否正在返回
 
+
 // Three.js 相关变量
 let scene, camera, renderer, controls, raycaster, mouse
 
@@ -94,8 +95,12 @@ const loadModel = () => {
     '/cangku20.glb',
     (gltf) => {
       console.log(gltf, 'model loaded')
-        const car_scene = gltf.scene;
-        scene.add(car_scene);
+      const car_scene = gltf.scene;
+      // 缩放整个场景到0.8倍
+      car_scene.scale.set(0.3, 0.3, 0.3);
+      // 将模型绕Y轴旋转30度（π/6弧度）,180度换算成弧度制是π
+      car_scene.rotation.x = Math.PI / 12;
+      scene.add(car_scene);
      
     },
     (progress) => {
