@@ -79,7 +79,7 @@ const initRenderer = () => {
 
 // 初始化灯光
 const initLights = () => {
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1)
   scene.add(ambientLight)
   const dirLight = new THREE.DirectionalLight(0xffffff, 1)
   dirLight.position.set(5, 10, 7.5)
