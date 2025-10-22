@@ -1,5 +1,46 @@
 <template>
   <div ref="container" class="content"></div>
+  
+  <!-- 机器详情弹框 -->
+  <div v-if="showMachineDialog" class="machine-dialog-overlay" @click="closeMachineDialog">
+    <div class="machine-dialog" @click.stop>
+      <div class="dialog-header">
+        <h3>机器详情</h3>
+        <button class="close-btn" @click="closeMachineDialog">×</button>
+      </div>
+      <div class="dialog-content">
+        <div class="machine-info">
+          <h4>{{ selectedMachine.name }}</h4>
+          <div class="info-row">
+            <span class="label">机器编号:</span>
+            <span class="value">{{ selectedMachine.id }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">机器类型:</span>
+            <span class="value">{{ selectedMachine.type }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">运行状态:</span>
+            <span class="value" :class="selectedMachine.status === '运行中' ? 'status-running' : 'status-stopped'">
+              {{ selectedMachine.status }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="label">温度:</span>
+            <span class="value">{{ selectedMachine.temperature }}°C</span>
+          </div>
+          <div class="info-row">
+            <span class="label">运行时长:</span>
+            <span class="value">{{ selectedMachine.runtime }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">最后维护:</span>
+            <span class="value">{{ selectedMachine.lastMaintenance }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -10,33 +51,17 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 const container = ref(null)
 
-// 固定的路径点坐标数组
-// 注意：Three.js坐标系 - X:左右, Y:上下, Z:前后
-const routePoints = [
-  { x: 0, y: 2.68, z: -17 },    // 起始点,顶点1 - 使用模型的实际地面高度
-  { x: 10, y: 2.68, z: -17 },    // 途经点1
-  { x: 15, y: 2.68, z: -17 },    // 途经点1
-  { x: 20, y: 2.68, z: -17 },    // 途经点1
-  { x: 25, y: 2.68, z: -17 },    // 途经点1
-  { x: 30, y: 2.68, z: -17 },  // 途经点1
-  { x: 32, y: 2.68, z: -17 },  // 顶点2
-  { x: 32, y: 2.68, z: -20 },  // 途经点2
-  { x: 32, y: 2.68, z: -23 },  // 途经点2
-  { x: 32, y: 2.68, z: -26 },  // 途经点2
-  { x: 32, y: 2.68, z: -29 },  // 顶点3
-  { x: 30, y: 2.68, z: -29 },  // 途经点3
-  { x: 25, y: 2.68, z: -29 },  // 途经点3
-  { x: 20, y: 2.68, z: -29 },  // 途经点3
-  { x: 15, y: 2.68, z: -29 },  // 途经点3
-  { x: 10, y: 2.68, z: -29 },  // 途经点3
-  { x: 0, y: 2.68, z: -29 },  // 顶点4
-  { x: 0, y: 2.68, z: -26 },  // 途经点4
-  { x: 0, y: 2.68, z: -23 },  // 途经点4
-  { x: 0, y: 2.68, z: -20 },  // 途经点4
-  { x: 0, y: 2.68, z: -17 }   // 终点,起始点,顶点1
-]
-
-
+// 弹框相关的响应式变量
+const showMachineDialog = ref(false)
+const selectedMachine = ref({
+  name: '',
+  id: '',
+  type: '',
+  status: '',
+  temperature: '',
+  runtime: '',
+  lastMaintenance: ''
+})
 
 // Three.js 相关变量
 let scene, camera, renderer, controls, raycaster, mouse
@@ -112,33 +137,105 @@ const initRaycaster = () => {
   mouse = new THREE.Vector2()
 }
 
-// 处理车辆点击事件
-const handleMachineClick = (clickedObject) => {
+
+const handleGoodsClick = (obj) => {
+  console.log('点击了货物对象:', obj.name, obj)
   
- const obj = clickedObject
-  
-  console.log('进来了',obj)
-  console.log('点击对象名称:', obj.name)
-  
-  // 只修改当前点击对象的颜色，不递归处理子对象
-  if (obj && obj.material) {
-    // 如果对象有材质，直接修改颜色
-    if (obj.material.color) {
-      obj.material.color.setHex(0x00ff00) // 设置为绿色
-      console.log(`对象 ${obj.name} 的颜色已改为绿色`)
+  // 定义一个函数来克隆材质并修改颜色
+  const cloneAndChangeMaterialColor = (material, objName, materialIndex = '') => {
+    if (material.color) {
+      // 克隆材质以避免影响其他对象
+      const clonedMaterial = material.clone()
+      clonedMaterial.color.setHex(0x00ff00) // 设置为绿色
+      console.log(`对象 ${objName} 的材质${materialIndex} 颜色已改为绿色`)
+      return clonedMaterial
     }
-    // 如果是材质数组，遍历所有材质
-    else if (Array.isArray(obj.material)) {
-      obj.material.forEach((material, index) => {
-        if (material.color) {
-          material.color.setHex(0x00ff00) // 设置为绿色
-          console.log(`对象 ${obj.name} 的材质${index} 颜色已改为绿色`)
-        }
-      })
-    }
-  } else {
-    console.log(`对象 ${obj.name} 没有材质或材质不支持颜色修改`)
+    return null
   }
+  
+  // 定义一个函数来处理对象的材质
+  const processObjectMaterial = (targetObj, objName) => {
+    if (targetObj && targetObj.material) {
+      // 如果是单个材质
+      if (!Array.isArray(targetObj.material)) {
+        const newMaterial = cloneAndChangeMaterialColor(targetObj.material, objName)
+        if (newMaterial) {
+          targetObj.material = newMaterial
+          return true
+        }
+      }
+      // 如果是材质数组，遍历所有材质
+      else {
+        let changed = false
+        const newMaterials = targetObj.material.map((material, index) => {
+          const newMaterial = cloneAndChangeMaterialColor(material, objName, `[${index}]`)
+          if (newMaterial) {
+            changed = true
+            return newMaterial
+          }
+          return material
+        })
+        if (changed) {
+          targetObj.material = newMaterials
+        }
+        return changed
+      }
+    }
+    return false
+  }
+  
+  let colorChanged = false
+  
+  // 情况1：对象本身有材质
+  if (obj && obj.material) {
+    colorChanged = processObjectMaterial(obj, obj.name)
+  }
+  // 情况2：材质在子对象中
+  else if (obj && obj.children && obj.children.length > 0) {
+    // 遍历所有子对象，寻找有材质的子对象
+    obj.children.forEach((child, index) => {
+      if (processObjectMaterial(child, `${obj.name}.children[${index}]`)) {
+        colorChanged = true
+      }
+    })
+  }
+  
+  if (!colorChanged) {
+    console.log(`对象 ${obj.name} 没有找到可修改颜色的材质`)
+  }
+}
+// 处理机器点击事件
+const handleMachineClick = (clickedObject) => {
+  const obj = clickedObject
+  
+  console.log('点击了机器:', obj.name)
+  
+  // 模拟机器详情数据
+  const machineData = {
+    name: `机器设备 ${obj.name}`,
+    id: `ID-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+    type: '生产设备',
+    status: Math.random() > 0.5 ? '运行中' : '停机',
+    temperature: `${(Math.random() * 30 + 40).toFixed(1)}`,
+    runtime: `${Math.floor(Math.random() * 24)}小时${Math.floor(Math.random() * 60)}分钟`,
+    lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString()
+  }
+  
+  // 设置选中的机器信息
+  selectedMachine.value = machineData
+  
+  // 显示弹框
+  // showMachineDialog.value = true
+  
+  // 将点击的对象颜色改为绿色（保留原有功能）
+  console.log(obj,'obj')
+  console.log(obj.material,'material')
+  handleGoodsClick(obj)
+}
+
+// 关闭机器详情弹框
+const closeMachineDialog = () => {
+  showMachineDialog.value = false
 }
 
 // 点击事件处理函数
@@ -228,5 +325,109 @@ onBeforeUnmount(() => {
 .content {
   width: 100vw;
   height: 100vh;
+}
+
+/* 弹框样式 */
+.machine-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.machine-dialog {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.dialog-header {
+  background: #2c3e50;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dialog-content {
+  padding: 20px;
+}
+
+.machine-info h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 16px;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-weight: 600;
+  color: #34495e;
+  flex: 1;
+}
+
+.value {
+  flex: 1;
+  text-align: right;
+  color: #2c3e50;
+}
+
+.status-running {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.status-stopped {
+  color: #e74c3c;
+  font-weight: 600;
 }
 </style>
