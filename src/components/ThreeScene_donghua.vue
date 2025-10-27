@@ -74,7 +74,7 @@ const initScene = () => {
   // 初始化时钟
   clock = new THREE.Clock()
   
-  // 添加坐标轴辅助器,调试用
+  // // 添加坐标轴辅助器,调试用
   // const axesHelper = new THREE.AxesHelper(20) // 轴长度为20
   // scene.add(axesHelper)
 }
@@ -115,17 +115,24 @@ const initControls = () => {
 const loadModel = () => {
   const loader = new GLTFLoader()
   loader.load(
-    '/chache_donghua.glb',
+    '/chejian123.glb',
     (gltf) => {
       const car_scene = gltf.scene;
       // 缩放整个场景到0.8倍
-      car_scene.scale.set(0.3, 0.3, 0.3);
+      car_scene.scale.set(0.26, 0.26, 0.26);
       // 将模型绕Y轴旋转30度（π/6弧度）,180度换算成弧度制是π
-      car_scene.rotation.x = Math.PI / 12;
+      car_scene.rotation.x = Math.PI*2 / 3;
+      car_scene.rotation.z = Math.PI;
       scene.add(car_scene);
       mixer = new THREE.AnimationMixer(gltf.scene);
-      const action = mixer.clipAction(gltf.animations[0]);
-      action.play();
+      
+      // 播放所有动画
+      console.log('模型中的动画数量:', gltf.animations.length);
+      gltf.animations.forEach((clip, index) => {
+        console.log(`动画 ${index}:`, clip.name);
+        const action = mixer.clipAction(clip);
+        action.play();
+      });
     },
     (progress) => {
       console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%')
